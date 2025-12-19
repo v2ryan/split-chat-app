@@ -12,7 +12,10 @@
         <div class="upper-part" id="admin-section">
             <div class="header">
                 <h2>Admin Chat (Read-Only for Users)</h2>
-                <button id="admin-login-btn">Login as Admin</button>
+                <div class="admin-controls">
+                    <button id="admin-clear-btn" style="display:none; background-color: #dc3545; margin-right: 10px;">Clear Chat</button>
+                    <button id="admin-login-btn">Login as Admin</button>
+                </div>
             </div>
             <div class="messages" id="admin-messages"></div>
             <form id="admin-form" class="chat-form disabled">

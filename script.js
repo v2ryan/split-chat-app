@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // TODO: Replace the following with your app's Firebase project configuration
 // See README.md for instructions on how to get this.
@@ -23,6 +23,7 @@ const adminForm = document.getElementById('admin-form');
 const adminInput = document.getElementById('admin-input');
 const adminMessages = document.getElementById('admin-messages');
 const adminLoginBtn = document.getElementById('admin-login-btn');
+const adminClearBtn = document.getElementById('admin-clear-btn');
 const adminSendBtn = document.getElementById('admin-send-btn');
 
 const publicForm = document.getElementById('public-form');
@@ -38,13 +39,34 @@ if (adminLoginBtn) {
             adminForm.classList.remove('disabled');
             adminInput.disabled = false;
             adminSendBtn.disabled = false;
+            adminClearBtn.style.display = 'inline-block';
             adminLoginBtn.textContent = 'Logout Admin';
             alert('You are now Admin!');
         } else {
             adminForm.classList.add('disabled');
             adminInput.disabled = true;
             adminSendBtn.disabled = true;
+            adminClearBtn.style.display = 'none';
             adminLoginBtn.textContent = 'Login as Admin';
+        }
+    });
+}
+
+// Clear Chat Logic
+if (adminClearBtn) {
+    adminClearBtn.addEventListener('click', async () => {
+        if (!isAdmin) return;
+        if (confirm("Are you sure you want to clear ALL chat history? This cannot be undone.")) {
+            try {
+                const q = query(collection(db, "messages"));
+                const snapshot = await getDocs(q);
+                const deletePromises = snapshot.docs.map(d => deleteDoc(doc(db, "messages", d.id)));
+                await Promise.all(deletePromises);
+                alert("Chat history cleared!");
+            } catch (e) {
+                console.error("Error clearing chat: ", e);
+                alert("Error clearing chat.");
+            }
         }
     });
 }
