@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split Chat App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Upper Part: Admin Only -->
+        <div class="upper-part" id="admin-section">
+            <div class="header">
+                <h2>Admin Chat (Read-Only for Users)</h2>
+                <button id="admin-login-btn">Login as Admin</button>
+            </div>
+            <div class="messages" id="admin-messages"></div>
+            <form id="admin-form" class="chat-form disabled">
+                <input type="text" id="admin-input" placeholder="Admin message..." disabled autocomplete="off">
+                <button type="submit" id="admin-send-btn" disabled>Send</button>
+            </form>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider"></div>
+
+        <!-- Lower Part: Public Chat -->
+        <div class="lower-part" id="public-section">
+            <div class="header">
+                <h2>Public Chat</h2>
+            </div>
+            <div class="messages" id="public-messages"></div>
+            <form id="public-form" class="chat-form">
+                <input type="text" id="public-input" placeholder="Type a message..." autocomplete="off">
+                <button type="submit">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
