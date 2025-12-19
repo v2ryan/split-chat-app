@@ -100,12 +100,24 @@ if (adminSaveBtn) {
         if (!isAdmin) return;
         
         try {
-            const q = query(collection(db, "messages"), where("date", "==", selectedDate), orderBy("timestamp"));
+            // Removed orderBy("timestamp")
+            const q = query(collection(db, "messages"), where("date", "==", selectedDate));
             const snapshot = await getDocs(q);
             
-            let content = `Chat History for ${selectedDate}\n\n`;
+            let messages = [];
             snapshot.forEach((doc) => {
-                const data = doc.data();
+                messages.push(doc.data());
+            });
+
+            // Sort messages by timestamp in memory
+            messages.sort((a, b) => {
+                const t1 = a.timestamp ? a.timestamp.toMillis() : Date.now();
+                const t2 = b.timestamp ? b.timestamp.toMillis() : Date.now();
+                return t1 - t2;
+            });
+            
+            let content = `Chat History for ${selectedDate}\n\n`;
+            messages.forEach((data) => {
                 const time = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString() : 'Pending';
                 const sender = data.type === 'admin' ? 'Admin' : 'User';
                 content += `[${time}] ${sender}: ${data.text}\n`;
@@ -172,13 +184,25 @@ function appendMessage(container, msg, timestamp) {
 function loadMessagesForDate(date) {
     if (unsubscribe) unsubscribe();
     
-    const q = query(collection(db, "messages"), where("date", "==", date), orderBy("timestamp"));
+    // Removed orderBy("timestamp") to avoid needing a composite index
+    const q = query(collection(db, "messages"), where("date", "==", date));
     unsubscribe = onSnapshot(q, (snapshot) => {
         adminMessages.innerHTML = '';
         publicMessages.innerHTML = '';
         
+        let messages = [];
         snapshot.forEach((doc) => {
-            const data = doc.data();
+            messages.push(doc.data());
+        });
+
+        // Sort messages by timestamp in memory
+        messages.sort((a, b) => {
+            const t1 = a.timestamp ? a.timestamp.toMillis() : Date.now();
+            const t2 = b.timestamp ? b.timestamp.toMillis() : Date.now();
+            return t1 - t2;
+        });
+        
+        messages.forEach((data) => {
             const text = data.text;
             const type = data.type;
             const timestamp = data.timestamp;
