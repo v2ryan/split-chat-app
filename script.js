@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs, deleteDoc, doc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs, deleteDoc, doc, where, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // TODO: Replace the following with your app's Firebase project configuration
 // See README.md for instructions on how to get this.
@@ -33,6 +33,7 @@ const adminLoginBtn = document.getElementById('admin-login-btn');
 const adminClearBtn = document.getElementById('admin-clear-btn');
 const adminSaveBtn = document.getElementById('admin-save-btn');
 const adminSendBtn = document.getElementById('admin-send-btn');
+const historyDropdown = document.getElementById('history-dropdown');
 
 const publicForm = document.getElementById('public-form');
 const publicInput = document.getElementById('public-input');
@@ -59,6 +60,7 @@ enterChatBtn.addEventListener('click', () => {
     chatScreen.style.display = 'flex';
     
     loadMessagesForDate(selectedDate);
+    loadSavedHistories(); // Load dropdown options
 });
 
 // Back to Login Logic
@@ -68,6 +70,7 @@ backToLoginBtn.addEventListener('click', () => {
     if (unsubscribe) unsubscribe(); // Stop listening to previous date
     adminMessages.innerHTML = '';
     publicMessages.innerHTML = '';
+    historyDropdown.value = 'live'; // Reset dropdown
 });
 
 // Admin Login Logic (Simple Toggle for Demo)
@@ -81,6 +84,7 @@ if (adminLoginBtn) {
             adminSendBtn.disabled = false;
             adminClearBtn.style.display = 'inline-block';
             adminSaveBtn.style.display = 'inline-block';
+            historyDropdown.style.display = 'inline-block';
             adminLoginBtn.textContent = 'Logout Admin';
             alert('You are now Admin!');
         } else {
@@ -89,18 +93,108 @@ if (adminLoginBtn) {
             adminSendBtn.disabled = true;
             adminClearBtn.style.display = 'none';
             adminSaveBtn.style.display = 'none';
+            historyDropdown.style.display = 'none';
             adminLoginBtn.textContent = 'Login as Admin';
+            
+            // Force back to live chat if logged out while viewing history
+            if (historyDropdown.value !== 'live') {
+                historyDropdown.value = 'live';
+                loadMessagesForDate(selectedDate);
+            }
         }
     });
 }
 
-// Save Chat Logic (Download as Text)
+// Load Saved Histories for Dropdown
+function loadSavedHistories() {
+    const q = query(collection(db, "saved_chats"), orderBy("savedAt", "desc"));
+    onSnapshot(q, (snapshot) => {
+        // Keep "Live Chat" option
+        historyDropdown.innerHTML = '<option value="live">Live Chat</option>';
+        
+        if (snapshot.empty) {
+            const option = document.createElement('option');
+            option.disabled = true;
+            option.textContent = '-- No Saved Chats --';
+            historyDropdown.appendChild(option);
+        } else {
+            const group = document.createElement('optgroup');
+            group.label = "Saved Histories";
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = data.name;
+                group.appendChild(option);
+            });
+            historyDropdown.appendChild(group);
+        }
+    });
+}
+
+// Handle Dropdown Change
+historyDropdown.addEventListener('change', async () => {
+    const choice = historyDropdown.value;
+    
+    if (choice === 'live') {
+        // Enable inputs
+        adminInput.disabled = false;
+        adminSendBtn.disabled = false;
+        adminForm.classList.remove('disabled');
+        currentDateDisplay.textContent = `(${selectedDate})`;
+        
+        loadMessagesForDate(selectedDate);
+    } else {
+        // Disable inputs (Read-only mode)
+        adminInput.disabled = true;
+        adminSendBtn.disabled = true;
+        adminForm.classList.add('disabled');
+        
+        if (unsubscribe) unsubscribe(); // Stop live listener
+        
+        try {
+            const docRef = doc(db, "saved_chats", choice);
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                currentDateDisplay.textContent = `(Viewing: ${data.name})`;
+                
+                adminMessages.innerHTML = '';
+                publicMessages.innerHTML = ''; // Optionally clear public or show same
+                
+                // Render saved messages
+                data.messages.forEach(msg => {
+                    // Convert Firestore timestamp back to object if needed, or just use stored string if we store it that way
+                    // Here we assume we stored the raw data, so timestamp might be a Firestore Timestamp object
+                    const type = msg.type;
+                    const text = msg.text;
+                    const timestamp = msg.timestamp;
+                    
+                    if (type === 'admin') {
+                        appendMessage(adminMessages, `Admin: ${text}`, timestamp);
+                    } else {
+                        appendMessage(publicMessages, `User: ${text}`, timestamp);
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Error loading saved chat:", e);
+            alert("Error loading saved chat.");
+        }
+    }
+});
+
+// Save Chat Logic (Save to Firestore)
 if (adminSaveBtn) {
     adminSaveBtn.addEventListener('click', async () => {
         if (!isAdmin) return;
         
+        const saveName = prompt("Enter a name for this save:", `Backup ${selectedDate} ${new Date().toLocaleTimeString()}`);
+        if (!saveName) return;
+
         try {
-            // Removed orderBy("timestamp")
+            // Fetch current messages
             const q = query(collection(db, "messages"), where("date", "==", selectedDate));
             const snapshot = await getDocs(q);
             
@@ -109,27 +203,22 @@ if (adminSaveBtn) {
                 messages.push(doc.data());
             });
 
-            // Sort messages by timestamp in memory
+            // Sort messages
             messages.sort((a, b) => {
                 const t1 = a.timestamp ? a.timestamp.toMillis() : Date.now();
                 const t2 = b.timestamp ? b.timestamp.toMillis() : Date.now();
                 return t1 - t2;
             });
             
-            let content = `Chat History for ${selectedDate}\n\n`;
-            messages.forEach((data) => {
-                const time = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString() : 'Pending';
-                const sender = data.type === 'admin' ? 'Admin' : 'User';
-                content += `[${time}] ${sender}: ${data.text}\n`;
+            // Save to 'saved_chats' collection
+            await addDoc(collection(db, "saved_chats"), {
+                name: saveName,
+                originalDate: selectedDate,
+                savedAt: serverTimestamp(),
+                messages: messages
             });
             
-            const blob = new Blob([content], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `chat-history-${selectedDate}.txt`;
-            a.click();
-            URL.revokeObjectURL(url);
+            alert("Chat saved successfully! Check the dropdown list.");
             
         } catch (e) {
             console.error("Error saving chat: ", e);
