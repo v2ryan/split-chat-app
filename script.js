@@ -5,12 +5,13 @@ import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTim
 // TODO: Replace the following with your app's Firebase project configuration
 // See README.md for instructions on how to get this.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyA0ZADGvf0Mvm0dEW1cr_rXoEWQHEZWLHM",
+  authDomain: "white-b381b.firebaseapp.com",
+  projectId: "white-b381b",
+  storageBucket: "white-b381b.firebasestorage.app",
+  messagingSenderId: "824500784810",
+  appId: "1:824500784810:web:e0f567f6f21d657adc4ad3",
+  measurementId: "G-MKPM0WGJNF"
 };
 
 // Initialize Firebase
