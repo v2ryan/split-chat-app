@@ -34,6 +34,7 @@ const adminClearBtn = document.getElementById('admin-clear-btn');
 const adminSaveBtn = document.getElementById('admin-save-btn');
 const adminSendBtn = document.getElementById('admin-send-btn');
 const historyDropdown = document.getElementById('history-dropdown');
+const deleteHistoryBtn = document.getElementById('delete-history-btn');
 
 const publicForm = document.getElementById('public-form');
 const publicInput = document.getElementById('public-input');
@@ -84,7 +85,10 @@ if (adminLoginBtn) {
             adminSendBtn.disabled = false;
             adminClearBtn.style.display = 'inline-block';
             adminSaveBtn.style.display = 'inline-block';
-            historyDropdown.style.display = 'inline-block';
+            // Show delete button only if a history is selected
+            if (historyDropdown.value !== 'live') {
+                deleteHistoryBtn.style.display = 'inline-block';
+            }
             adminLoginBtn.textContent = 'Logout Admin';
             alert('You are now Admin!');
         } else {
@@ -93,7 +97,7 @@ if (adminLoginBtn) {
             adminSendBtn.disabled = true;
             adminClearBtn.style.display = 'none';
             adminSaveBtn.style.display = 'none';
-            historyDropdown.style.display = 'none';
+            deleteHistoryBtn.style.display = 'none';
             adminLoginBtn.textContent = 'Login as Admin';
             
             // Force back to live chat if logged out while viewing history
@@ -110,6 +114,7 @@ function loadSavedHistories() {
     const q = query(collection(db, "saved_chats"), orderBy("savedAt", "desc"));
     onSnapshot(q, (snapshot) => {
         // Keep "Live Chat" option
+        const currentVal = historyDropdown.value;
         historyDropdown.innerHTML = '<option value="live">Live Chat</option>';
         
         if (snapshot.empty) {
@@ -129,6 +134,18 @@ function loadSavedHistories() {
             });
             historyDropdown.appendChild(group);
         }
+        
+        // Restore selection if it still exists
+        if (currentVal !== 'live') {
+            // Check if the option still exists
+            const exists = Array.from(historyDropdown.options).some(opt => opt.value === currentVal);
+            if (exists) {
+                historyDropdown.value = currentVal;
+            } else {
+                historyDropdown.value = 'live';
+                loadMessagesForDate(selectedDate);
+            }
+        }
     });
 }
 
@@ -136,11 +153,20 @@ function loadSavedHistories() {
 historyDropdown.addEventListener('change', async () => {
     const choice = historyDropdown.value;
     
+    // Toggle Delete Button visibility based on selection and admin status
+    if (choice !== 'live' && isAdmin) {
+        deleteHistoryBtn.style.display = 'inline-block';
+    } else {
+        deleteHistoryBtn.style.display = 'none';
+    }
+    
     if (choice === 'live') {
         // Enable inputs
-        adminInput.disabled = false;
-        adminSendBtn.disabled = false;
-        adminForm.classList.remove('disabled');
+        if (isAdmin) {
+            adminInput.disabled = false;
+            adminSendBtn.disabled = false;
+            adminForm.classList.remove('disabled');
+        }
         currentDateDisplay.textContent = `(${selectedDate})`;
         
         loadMessagesForDate(selectedDate);
@@ -184,6 +210,30 @@ historyDropdown.addEventListener('change', async () => {
         }
     }
 });
+
+// Delete Saved History Logic
+if (deleteHistoryBtn) {
+    deleteHistoryBtn.addEventListener('click', async () => {
+        if (!isAdmin) return;
+        const choice = historyDropdown.value;
+        if (choice === 'live') return;
+        
+        if (confirm("Are you sure you want to DELETE this saved history? This cannot be undone.")) {
+            try {
+                await deleteDoc(doc(db, "saved_chats", choice));
+                alert("Saved history deleted.");
+                // Dropdown will update automatically via onSnapshot
+                // We just need to switch back to live
+                historyDropdown.value = 'live';
+                // Trigger change event manually or just call the logic
+                historyDropdown.dispatchEvent(new Event('change'));
+            } catch (e) {
+                console.error("Error deleting saved chat:", e);
+                alert("Error deleting saved chat.");
+            }
+        }
+    });
+}
 
 // Save Chat Logic (Save to Firestore)
 if (adminSaveBtn) {

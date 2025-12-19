@@ -23,13 +23,17 @@
         <div class="upper-part" id="admin-section">
             <div class="header">
                 <h2>Admin Chat <span id="current-date-display"></span></h2>
-                <div class="admin-controls">
-                    <button id="admin-save-btn" style="display:none; background-color: #28a745; margin-right: 5px;">Save</button>
-                    <select id="history-dropdown" style="display:none; padding: 5px; margin-right: 10px; border-radius: 4px;">
+                <div class="controls-container" style="display: flex; align-items: center;">
+                    <select id="history-dropdown" style="padding: 5px; margin-right: 5px; border-radius: 4px;">
                         <option value="live">Live Chat</option>
                     </select>
-                    <button id="admin-clear-btn" style="display:none; background-color: #dc3545; margin-right: 10px;">Clear</button>
-                    <button id="admin-login-btn">Login as Admin</button>
+                    <button id="delete-history-btn" style="display:none; background-color: #dc3545; margin-right: 10px; font-size: 0.8em;">Del</button>
+                    
+                    <div class="admin-controls">
+                        <button id="admin-save-btn" style="display:none; background-color: #28a745; margin-right: 5px;">Save</button>
+                        <button id="admin-clear-btn" style="display:none; background-color: #dc3545; margin-right: 10px;">Clear</button>
+                        <button id="admin-login-btn">Login as Admin</button>
+                    </div>
                 </div>
             </div>
             <div class="messages" id="admin-messages"></div>
