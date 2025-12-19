@@ -74,24 +74,32 @@ backToLoginBtn.addEventListener('click', () => {
     historyDropdown.value = 'live'; // Reset dropdown
 });
 
-// Admin Login Logic (Simple Toggle for Demo)
+// Admin Login Logic
 let isAdmin = false;
 if (adminLoginBtn) {
     adminLoginBtn.addEventListener('click', () => {
-        isAdmin = !isAdmin;
-        if (isAdmin) {
-            adminForm.classList.remove('disabled');
-            adminInput.disabled = false;
-            adminSendBtn.disabled = false;
-            adminClearBtn.style.display = 'inline-block';
-            adminSaveBtn.style.display = 'inline-block';
-            // Show delete button only if a history is selected
-            if (historyDropdown.value !== 'live') {
-                deleteHistoryBtn.style.display = 'inline-block';
+        if (!isAdmin) {
+            // Login Attempt
+            const password = prompt("Enter Admin Password:");
+            if (password === "65775833") {
+                isAdmin = true;
+                adminForm.classList.remove('disabled');
+                adminInput.disabled = false;
+                adminSendBtn.disabled = false;
+                adminClearBtn.style.display = 'inline-block';
+                adminSaveBtn.style.display = 'inline-block';
+                // Show delete button only if a history is selected
+                if (historyDropdown.value !== 'live') {
+                    deleteHistoryBtn.style.display = 'inline-block';
+                }
+                adminLoginBtn.textContent = 'Logout Admin';
+                alert('You are now Admin!');
+            } else if (password !== null) {
+                alert("Incorrect Password!");
             }
-            adminLoginBtn.textContent = 'Logout Admin';
-            alert('You are now Admin!');
         } else {
+            // Logout
+            isAdmin = false;
             adminForm.classList.add('disabled');
             adminInput.disabled = true;
             adminSendBtn.disabled = true;
