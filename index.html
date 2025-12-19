@@ -7,13 +7,25 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <!-- Login / Date Selection Screen -->
+    <div id="login-screen" class="login-container">
+        <div class="login-box">
+            <h1>Welcome to Split Chat</h1>
+            <p>Select a date to view or start a chat.</p>
+            <input type="date" id="date-picker">
+            <button id="enter-chat-btn">Enter Chat</button>
+        </div>
+    </div>
+
+    <!-- Main Chat Screen (Hidden by default) -->
+    <div class="container" id="chat-screen" style="display: none;">
         <!-- Upper Part: Admin Only -->
         <div class="upper-part" id="admin-section">
             <div class="header">
-                <h2>Admin Chat (Read-Only for Users)</h2>
+                <h2>Admin Chat <span id="current-date-display"></span></h2>
                 <div class="admin-controls">
-                    <button id="admin-clear-btn" style="display:none; background-color: #dc3545; margin-right: 10px;">Clear Chat</button>
+                    <button id="admin-save-btn" style="display:none; background-color: #28a745; margin-right: 5px;">Save</button>
+                    <button id="admin-clear-btn" style="display:none; background-color: #dc3545; margin-right: 10px;">Clear</button>
                     <button id="admin-login-btn">Login as Admin</button>
                 </div>
             </div>
@@ -31,6 +43,7 @@
         <div class="lower-part" id="public-section">
             <div class="header">
                 <h2>Public Chat</h2>
+                <button id="back-to-login-btn" style="font-size: 0.8em;">Change Date</button>
             </div>
             <div class="messages" id="public-messages"></div>
             <form id="public-form" class="chat-form">
